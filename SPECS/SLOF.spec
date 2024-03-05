@@ -4,7 +4,7 @@
 
 Name:       SLOF
 Version:    %{GITDATE}
-Release:    1%{?dist}
+Release:    1%{?dist}.1
 Summary:    Slimline Open Firmware
 Group:      Applications/Emulators
 License:    BSD
@@ -12,6 +12,10 @@ URL:        http://www.openfirmware.info/SLOF
 
 Source0: https://github.com/aik/SLOF/archive/qemu-slof-20210217.tar.gz
 
+# For RHEL-15999 - SLOF regression prevents VM startup [rhel-8.9.0.z]
+Patch1: slof-virtio-serial-Make-read-and-write-methods-report-fai.patch
+# For RHEL-15999 - SLOF regression prevents VM startup [rhel-8.9.0.z]
+Patch2: slof-virtio-serial-Do-not-close-stdout-on-quiesce.patch
 
 BuildArch: noarch
 ExclusiveArch: %{power64}
@@ -56,6 +60,12 @@ install -c -m 0644 boot_rom.bin $RPM_BUILD_ROOT%{_datadir}/qemu-kvm/slof.bin
 %{_datadir}/qemu-kvm/slof.bin
 
 %changelog
+* Wed Nov 22 2023 Miroslav Rezanina <mrezanin@redhat.com> - 20210217-1.el8_9.1
+- slof-virtio-serial-Make-read-and-write-methods-report-fai.patch [RHEL-15999]
+- slof-virtio-serial-Do-not-close-stdout-on-quiesce.patch [RHEL-15999]
+- Resolves: RHEL-15999
+  (SLOF regression prevents VM startup [rhel-8.9.0.z])
+
 * Thu Sep 2 2021 Danilo C. L. de Paula <ddepaula@redhat.com> - 20210217-1.el8
 - Resolves: bz#2000225
   (Rebase virt:rhel module:stream based on AV-8.6)

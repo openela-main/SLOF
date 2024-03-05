@@ -1,0 +1,61 @@
+From b9cd05513cc18363f46ad14a09c26b1dbc5c5c3f Mon Sep 17 00:00:00 2001
+From: Thomas Huth <thuth@redhat.com>
+Date: Fri, 10 Nov 2023 12:23:47 +0100
+Subject: [PATCH 1/2] virtio-serial: Make read and write methods report failure
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Thomas Huth <thuth@redhat.com>
+RH-MergeRequest: 2: Fix SLOF regression that prevents VM startup with virtio-serial consoles
+RH-Jira: RHEL-15999
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: Cédric Le Goater <clg@redhat.com>
+RH-Commit: [1/2] dbe438e180d62b9550abdc60e6166f88115fe642
+
+The read and write methods return successfully even if the virtio device
+is closed (virtiodev is 0) and it is not able to send or receive any
+characters.
+
+Make the read and write methods return 0 to indicate they did not
+succeed in this case.
+
+This also fixes an invalid stack access in the read method.
+
+Fixes: 8174acd ("virtio-serial: Close device completely")
+Signed-off-by: Kautuk Consul <kconsul@linux.vnet.ibm.com>
+Signed-off-by: Jordan Niethe <jniethe5@gmail.com>
+Reviewed-by: Thomas Huth <thuth@redhat.com>
+Signed-off-by: Alexey Kardashevskiy <aik@ozlabs.ru>
+(cherry picked from commit 63b66a5147069bda815989732442cb07790609db)
+JIRA: https://issues.redhat.com/browse/RHEL-15999
+Signed-off-by: Thomas Huth <thuth@redhat.com>
+---
+ board-qemu/slof/virtio-serial.fs | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/board-qemu/slof/virtio-serial.fs b/board-qemu/slof/virtio-serial.fs
+index 82868e2..41e2e04 100644
+--- a/board-qemu/slof/virtio-serial.fs
++++ b/board-qemu/slof/virtio-serial.fs
+@@ -67,7 +67,7 @@ virtiodev virtio-serial-init drop
+ ;
+ 
+ : write ( addr len -- actual )
+-    virtiodev 0= IF nip EXIT THEN
++    virtiodev 0= IF 2drop 0 EXIT THEN
+     tuck
+     0 ?DO
+         dup c@ virtiodev SWAP virtio-serial-putchar
+@@ -78,7 +78,7 @@ virtiodev virtio-serial-init drop
+ 
+ : read ( addr len -- actual )
+     0= IF drop 0 EXIT THEN
+-    virtiodev 0= IF nip EXIT THEN
++    virtiodev 0= IF drop 0 EXIT THEN
+     virtiodev virtio-serial-haschar 0= IF 0 swap c! -2 EXIT THEN
+     virtiodev virtio-serial-getchar swap c! 1
+ ;
+-- 
+2.39.3
+
